@@ -6,8 +6,6 @@
 //  Copyright © 2019 Denis Bystruev. All rights reserved.
 //
 
-import UIKit
-import SceneKit
 import ARKit
 
 class ViewController: UIViewController, ARSCNViewDelegate {
@@ -17,17 +15,14 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Set the view's delegate
-        sceneView.delegate = self
         
         // Show statistics such as fps and timing information
         sceneView.showsStatistics = true
         
-        // Create a new scene
-        let scene = SCNScene(named: "art.scnassets/ship.scn")!
+        sceneView.autoenablesDefaultLighting = true
         
-        // Set the scene to the view
-        sceneView.scene = scene
+        loadCampus()
+        loadCampusFromCode()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -46,30 +41,57 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         // Pause the view's session
         sceneView.session.pause()
     }
+    
+}
 
-    // MARK: - ARSCNViewDelegate
-    
-/*
-    // Override to create and configure nodes for anchors added to the view's session.
-    func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
-        let node = SCNNode()
-     
-        return node
-    }
-*/
-    
-    func session(_ session: ARSession, didFailWithError error: Error) {
-        // Present an error message to the user
-        
+
+// MARK: - Campus Creation
+extension ViewController {
+    func loadCampus() {
+        let scene = SCNScene(named: "art.scnassets/Campus.scn")!
+        let node = scene.rootNode.clone()
+        node.position = SCNVector3(-2, -0.5, -3)
+        sceneView.scene.rootNode.addChildNode(node)
     }
     
-    func sessionWasInterrupted(_ session: ARSession) {
-        // Inform the user that the session has been interrupted, for example, by presenting an overlay
+    func loadCampusFromCode() {
+        let campus = SCNNode()
+        campus.position = SCNVector3(2, -0.5, -3)
         
+        let building = getBuilding()
+        campus.addChildNode(building)
+        
+        let grass = getGrass()
+        grass.position.y -= 0.501
+        campus.addChildNode(grass)
+        
+        sceneView.scene.rootNode.addChildNode(campus)
     }
     
-    func sessionInterruptionEnded(_ session: ARSession) {
-        // Reset tracking and/or remove existing anchors if consistent tracking is required
+    func getBuilding() ->SCNNode {
+        let colors = [#colorLiteral(red: 0.1764705926, green: 0.01176470611, blue: 0.5607843399, alpha: 1), #colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1), #colorLiteral(red: 0.9686274529, green: 0.78039217, blue: 0.3450980484, alpha: 1), #colorLiteral(red: 0.1921568662, green: 0.007843137719, blue: 0.09019608051, alpha: 1), #colorLiteral(red: 0.7450980544, green: 0.1568627506, blue: 0.07450980693, alpha: 1), #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)]
+        let materials = colors.map { color -> SCNMaterial in
+            let material = SCNMaterial()
+            material.diffuse.contents = color
+            return material
+        }
         
+        let box = SCNBox(width: 3, height: 1, length: 1, chamferRadius: 0)
+        box.materials = materials
+        
+        let building = SCNNode(geometry: box)
+        
+        return building
+    }
+    
+    
+    func getGrass() -> SCNNode {
+        let plane = SCNPlane(width: 4, height: 2)
+        plane.firstMaterial?.diffuse.contents = UIImage(named: "grass")
+        
+        let grass = SCNNode(geometry: plane)
+        grass.eulerAngles.x = -.pi / 2
+        
+        return grass
     }
 }
